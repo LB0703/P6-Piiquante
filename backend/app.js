@@ -1,10 +1,14 @@
 const express = require("express");
 const app = express();
+
 const mongoose = require("mongoose");
+const path = require('path');
 
 const saucesRoutes = require("./routes/sauces");
-const userRoutes = require("./routes/user");
+const userRoutes = require("./routes/users");
+
 const cors = require("cors");
+
 mongoose.connect(
     "mongodb+srv://Laetitia:Malaxeur01120@p6piquante.fpqphi9.mongodb.net/test",
     { useNewUrlParser: true, 
@@ -32,6 +36,8 @@ app.use(express.json());
 app.use("/api/sauces", saucesRoutes);
 
 app.use("/api/auth", userRoutes);
+
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use(cors());
 
