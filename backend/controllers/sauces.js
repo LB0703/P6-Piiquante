@@ -147,46 +147,4 @@ exports.ratingSauce = (req, res, next) => {
       
 
       
-  
-
-
-
-
-
-
-
  
-
-
-
-//exports.ratingSauce = (req, res, next) => {
-//Sauce.findOne({_id: req.params.id})
-//    .then((sauce) => {
-      // The user has not already liked the sauce and he choise to click on like button
-//      if(!usersliked.includes(req.body.userId) && req.body.like === 1) {
-      // Updating the sauce data , incrementing the like and push the userliked into the same userId
-//        Sauce.updateOne({_id: req.params.id}, {$inc: {likes: +1}, $push: {usersliked: req.body.userId}})
- //         .then(() => res.status(200).json({message: "Vous aimé cette sauce"}))
- //         .catch(error => res.status(400).json({ error: error }))
-          
- //     }else if(sauce.usersLiked.includes(req.body.userId) && req.body.like === 0){   
- //       Sauce.updateOne({_id: req.params.id}), {$inc: {likes: -1}, $push: {usersliked: req.body.userId}}
- //       .then(() => res.status(200).json({message: "Vous avez décider de ne pas liké"}))
- //       .catch(error => res.status(400).json({ error: error }))
-
- //     }else if(!sauce.usersDisliked.includes(req.body.userId) && req.body.like === -1){
-//        Sauce.updateOne({_id: req.params.id}), {$inc: {dislikes: +1}, $push: {usersDisliked: req.body.userId}}
-//        .then(() => res.status(200).json({message: "Vous n'aimez pas cette sauce"}))
- //       .catch(error => res.status(400).json({ error: error }))
-
-  //    }else if(sauce.usersDisliked.includes(req.body.userId) && req.body.like === 0){
-  //      Sauce.updateOne({_id: req.params.id}), {$inc: {dislikes: -1}, $push: {usersDisliked: req.body.userId}}
- //       .then(() => res.status(200).json({message: "Vous avez décider de ne pas liké"}))
- //       .catch(error => res.status(400).json({ error: error }))
-
- //     }else{
- //       return res.status(401).json({message: "une erreur est survenue"})
-//      }
-//    })
-//    .catch(error => res.status(400).json({ error: error }));
-//};
