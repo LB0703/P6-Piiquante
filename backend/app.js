@@ -7,6 +7,7 @@ const path = require('path');
 const saucesRoutes = require("./routes/sauces");
 const userRoutes = require("./routes/users");
 
+
 const cors = require("cors");
 
 mongoose.connect(
