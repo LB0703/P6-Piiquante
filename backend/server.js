@@ -1,9 +1,12 @@
+// Importing the Node HTTP package.js
 const http = require('http');
+
+// Importing  app.js
 const app = require('./app');
 
+// A function that returns a valid port, whether provided as a number or a string
 const normalizePort = val => {
   const port = parseInt(val, 10);
-
   if (isNaN(port)) {
     return val;
   }
@@ -12,9 +15,13 @@ const normalizePort = val => {
   }
   return false;
 };
-const port = normalizePort(process.env.PORT || '3000');
+
+// Setting the port with the Express set method
+const port = normalizePort(process.env.PORT ||'3000');
+// app uses the normalised port
 app.set('port', port);
 
+// Function that looks for different errors and handles them appropriately
 const errorHandler = error => {
   if (error.syscall !== 'listen') {
     throw error;
@@ -44,4 +51,5 @@ server.on('listening', () => {
   console.log('Listening on ' + bind);
 });
 
+// Port you want to listen to, if the port is not available => default port 3000
 server.listen(port);
