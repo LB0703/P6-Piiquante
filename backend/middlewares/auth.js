@@ -1,5 +1,6 @@
 // Import of "jsonwebtoken" to create random and unique tokens
 const jwt = require("jsonwebtoken");
+
 // Import environment variables
 require("dotenv").config();
 

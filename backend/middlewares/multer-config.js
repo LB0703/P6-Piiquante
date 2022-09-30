@@ -1,5 +1,5 @@
 // Importing multer
-const multer = require('multer');
+const multer = require("multer");
 
 // We define the format of the images received
 const MIME_TYPES = {
@@ -20,9 +20,10 @@ const storage = multer.diskStorage({
     // We replace any spaces with an underscore
     const name = file.originalname.split(' ').join('_');
     const extension = MIME_TYPES[file.mimetype];
-    //     We add the date to the name to be sure to have a unique file name
+    // We add the date to the name to be sure to have a unique file name
     callback(null, name + Date.now() + '.' + extension);
   }
 });
+
 // Exporting the multer middleware
 module.exports = multer({storage: storage}).single('image');

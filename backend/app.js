@@ -15,11 +15,13 @@ const rateLimit = require("express-rate-limit");
 // Helmet secures Express applications by setting various HTTP headers
 const helmet = require("helmet");
 
+// To solve an unknown error when creating a user from the front
 const cors = require("cors");
 
 // Importing roads
 const saucesRoutes = require("./routes/sauces");
 const userRoutes = require("./routes/users");
+
 // Accessing the path of our file system
 const path = require("path");
 
@@ -34,6 +36,7 @@ mongoose
   )
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
+
 // CORS: Adding Permissions Middleware
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -64,12 +67,13 @@ app.use(limiter);
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
+app.use(cors());
+
 // Routes expected by the frontend
 app.use("/api/sauces", saucesRoutes);
 app.use("/api/auth", userRoutes);
+
 // File download middleware 'images of sauces'
 app.use("/images", express.static(path.join(__dirname, "images")));
-
-app.use(cors());
 
 module.exports = app;

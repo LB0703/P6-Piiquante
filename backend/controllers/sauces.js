@@ -1,5 +1,6 @@
 // Importing the sauce model
 const Sauce = require("../models/sauces");
+
 // Importing the file system (fs) package containing functions to modify the file system and file deletion
 const fs = require("fs");
 
@@ -13,13 +14,10 @@ exports.createSauce = (req, res, next) => {
     ...sauceObject,
     userId: req.auth.userId,
     // Dynamically retrieving the image url
-    imageUrl: `${req.protocol}://${req.get("host")}/images/${
-      req.file.filename
-    }`,
+    imageUrl: `${req.protocol}://${req.get("host")}/images/${req.file.filename}`,
   });
   // Save method to save Sauce in the database
-  sauce
-    .save()
+  sauce.save()
     .then(() => {
       res.status(201).json({ message: "Sauce enregistré !" });
     })
@@ -30,13 +28,10 @@ exports.createSauce = (req, res, next) => {
 
 // Export of the "modifySauce" function allowing to modify a sauce
 exports.modifySauce = (req, res, next) => {
-  const sauceObject = req.file
-    ? {
+  const sauceObject = req.file ? {
         ...JSON.parse(req.body.sauce),
-        imageUrl: `${req.protocol}://${req.get("host")}/images/${
-          req.file.filename
-        }`,
-      }
+        imageUrl: `${req.protocol}://${req.get("host")}/images/${req.file.filename}`,
+  }
     : { ...req.body };
   delete sauceObject._userId;
   Sauce.findOne({ _id: req.params.id })
@@ -45,32 +40,23 @@ exports.modifySauce = (req, res, next) => {
       if (sauce.userId != req.auth.userId) {
         res.status(403).json({ message: "Not authorized" });
       } else {
-        // We retrieve the content of the image file in the request
-        const reqFile = req.file;
-        // If it does not exist, we update the modifications
-        if (!reqFile) {
-          Sauce.updateOne(
-            { _id: req.params.id },
-            { ...sauceObject, _id: req.params.id }
-          )
-            .then(() => {
-              res.status(200).json({ message: "Sauce modifiée !" });
-            })
-            .catch((error) => res.status(401).json({ error }));
-        }
-        // We retrieve the name of the image file of the sauce in the 'images' folder
+      	// Storing previous image file name
         const filename = sauce.imageUrl.split("/images/")[1];
-        // Then we delete it with 'unlink' and finally we update the modifications
-        fs.unlink(`images/${filename}`, () => {
-          Sauce.updateOne(
-            { _id: req.params.id },
-            { ...sauceObject, _id: req.params.id }
-          )
-            .then(() => {
-              res.status(200).json({ message: "Sauce modifiée !" });
-            })
-            .catch((error) => res.status(401).json({ error }));
-        });
+        // We save the sauce in database
+        Sauce.updateOne(
+          { _id: req.params.id },
+          { ...sauceObject, _id: req.params.id }
+        )
+        .then(() => {
+        	// If there is an uploaded file, we delete the previous one
+          if (req.file) {
+            fs.unlink(`images/${filename}`, function(err) {
+              if(err) return console.log(err);
+            });
+          }
+          res.status(200).json({ message: "Sauce modifiée !" });
+        })
+        .catch((error) => res.status(401).json({ error }));
       }
     })
     .catch((error) => {
@@ -124,8 +110,8 @@ exports.getAllSauces = (req, res, next) => {
     });
 };
 
-//////////////////////////////// Create function to choise the likes and dislikes
-// If unserId is note in the away for note vote 2 times
+//////////////////////////////// Create function to like or dislike
+// If userId is not in the array to avoid him to vote 2 times
 exports.ratingSauce = (req, res, next) => {
   // We retrieve the userId
   let userId = req.body.userId;
@@ -133,74 +119,80 @@ exports.ratingSauce = (req, res, next) => {
   let sauceId = req.params.id;
   // We retrieve the like of the body request
   let like = req.body.like;
-
-  if (like === 1) {
-    // If the user clicks the Like for the first time, we update the sauce with this Id
-    Sauce.updateOne(
-      { _id: sauceId },
-      {
-        // We add a Like the userId to the array of usersLiked
-        $push: { usersLiked: userId },
-        // We increment likes
-        $inc: { likes: +1 },
+  // We load the sauce
+  Sauce.findOne({
+    _id: sauceId,
+  })
+	.then((sauce) => {
+		// ################################################## LIKE
+		if (like === 1) {
+		  // If the user clicks the Like for the first time, we update the sauce with this Id
+			if (sauce.usersLiked.includes(userId) || sauce.usersDisliked.includes(userId)) {
+				res.status(400).json({ message: "Vous avez déjà voté" });
+			}
+			else {
+        Sauce.updateOne(
+          { _id: sauceId },
+          {
+			      // We add a Like the userId to the array of usersLiked
+            $push: { usersLiked: userId },
+			      // We increment likes
+            $inc: { likes: +1 },
+          }
+        )
+        .then(() =>
+          res.status(200).json({ message: "Vous avez Liké cette sauce !" })
+        )
+        .catch((error) => res.status(400).json({ error }));
+			}
+		}
+		// ################################################## DISLIKE
+		if (like === -1) {
+		  // If the user clicks disLike for the first time, we update the sauce with this Id
+			if (sauce.usersLiked.includes(userId) || sauce.usersDisliked.includes(userId)) {
+				res.status(400).json({ message: "Vous avez déjà voté" });
+			}
+			else {
+        Sauce.updateOne(
+          { _id: sauceId },
+        // We add a dislike the userId to the array of usersDisliked and we increment dislikes
+          { $push: { usersDisliked: userId }, $inc: { dislikes: +1 } }
+        )
+        .then(() =>
+          res.status(200).json({ message: "Vous avez Disliké cette sauce !" })
+        )
+        .catch((error) => res.status(400).json({ error }));
       }
-    )
-      .then(() =>
-        res.status(200).json({ message: "Vous avez Liké cette sauce !" })
-      )
-      .catch((error) => res.status(400).json({ error }));
-  }
-
-  if (like === -1) {
-    // If the user clicks disLike for the first time, we update the sauce with this Id
-    Sauce.updateOne(
-      { _id: sauceId },
-      {
-        // We add a dislike the userId to the array of usersDisliked
-        $push: { usersDisliked: userId },
-        // We increment dislikes
-        $inc: { dislikes: +1 },
-      }
-    )
-      .then(() =>
-        res.status(200).json({ message: "Vous avez Disliké cette sauce !" })
-      )
-      .catch((error) => res.status(400).json({ error }));
-  }
-
-  // Delete like or dislike
-  if (like === 0) {
-    Sauce.findOne({
-      _id: sauceId,
-    })
-      .then((sauce) => {
-        // Delete like
-        // If the user has already clicked on the like so if the userId is included in the table of usersLiked
-        if (sauce.usersLiked.includes(userId)) {
-          Sauce.updateOne(
-            { _id: sauceId },
-            // We remove the userId from the table of usersLiked and we decrement likes
-            { $pull: { usersLiked: userId }, $inc: { likes: -1 } }
-          )
-            .then(() =>
-              res.status(200).json({ message: "Votre Like a été retiré !" })
-            )
-            .catch((error) => res.status(400).json({ error }));
-        }
-        // Delete dislike
-        // If the user has already thumb clicked disLike so if the userId is included in the array of usersDisliked
-        if (sauce.usersDisliked.includes(userId)) {
-          Sauce.updateOne(
-            { _id: sauceId },
-            // We remove the userId from the table of usersDisliked and we decrement disLikes
-            { $pull: { usersDisliked: userId }, $inc: { dislikes: -1 } }
-          )
-            .then(() =>
-              res.status(200).json({ message: "Votre Dislike a été retiré !" })
-            )
-            .catch((error) => res.status(400).json({ error }));
-        }
-      })
-      .catch((error) => res.status(400).json({ error }));
-  }
+		}
+		// ################################################## CANCEL
+		if (like === 0) {
+			// Delete like
+			// If the user has already clicked on the like so if the userId is included in the table of usersLiked
+			if (sauce.usersLiked.includes(userId)) {
+        Sauce.updateOne(
+          { _id: sauceId },
+			  // We remove the userId from the table of usersLiked and we decrement likes
+        { $pull: { usersLiked: userId }, $inc: { likes: -1 } }
+        )
+        .then(() =>
+          res.status(200).json({ message: "Votre Like a été retiré !" })
+        )
+        .catch((error) => res.status(400).json({ error }));
+			}
+			// Delete dislike
+			// If the user has already thumb clicked disLike so if the userId is included in the array of usersDisliked
+			if (sauce.usersDisliked.includes(userId)) {
+        Sauce.updateOne(
+          { _id: sauceId },
+			    // We remove the userId from the table of usersDisliked and we decrement disLikes
+          { $pull: { usersDisliked: userId }, $inc: { dislikes: -1 } }
+        )
+        .then(() =>
+          res.status(200).json({ message: "Votre Dislike a été retiré !" })
+        )
+        .catch((error) => res.status(400).json({ error }));
+			}
+		}
+	})
+	.catch((error) => res.status(400).json({ error }));
 };
